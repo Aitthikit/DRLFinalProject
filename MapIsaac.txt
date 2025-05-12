@@ -1,0 +1,66 @@
+% --- Load JSON data first ---
+filePath = 'Env2';
+jsonText = fileread(filePath);
+obsData = jsondecode(jsonText);
+
+% Convert data depending on type
+if isnumeric(obsData)
+    obsArray = squeeze(obsData);
+elseif iscell(obsData)
+    obsArray = cell2mat(obsData);
+else
+    error('Unhandled data type: %s', class(obsData));
+end
+
+% Transform the data
+offsets = [0.0, 6.28, -1.57, 0.0, 0.0, 0.0];
+multipliers = [1.0, -1.0, -1.0, 1.0, -1.0, -1.0];
+obsTransformed = obsArray .* multipliers + offsets;
+
+% Create JSON time vector
+t_json = linspace(0, 30, size(obsTransformed, 1));  % 3000 points over 30s
+
+% Get Simulink time vector
+tsim = out.tout;
+
+% Interpolate JSON data to match Simulink time steps
+p_interp  = interp1(t_json, obsTransformed(:, 1), tsim);  % Cart Position
+q1_interp = interp1(t_json, obsTransformed(:, 2), tsim);  % θ₁
+q2_interp = interp1(t_json, obsTransformed(:, 3), tsim);  % θ₂
+w1_interp = interp1(t_json, obsTransformed(:, 5), tsim);  % θ̇₁
+w2_interp = interp1(t_json, obsTransformed(:, 6), tsim);  % θ̇₂
+
+% --- Plot combined results ---
+figure;
+
+subplot(4,2,1);
+plot(tsim, out.q1.Data, 'r'); hold on;
+plot(tsim, q1_interp, 'b--');
+xlabel('Time (s)'); ylabel('q1'); title('Link 1 Position vs Time');
+legend('Simulink', 'Isaac Sim');
+
+subplot(4,2,2);
+plot(tsim, out.q2.Data, 'r'); hold on;
+plot(tsim, q2_interp, 'b--');
+xlabel('Time (s)'); ylabel('q2'); title('Link 2 Position vs Time');
+legend('Simulink', 'Isaac Sim');
+
+subplot(4,2,3);
+plot(tsim, out.w1.Data, 'r'); hold on;
+plot(tsim, w1_interp, 'b--');
+xlabel('Time (s)'); ylabel('w1'); title('Link 1 Angular Velocity vs Time');
+legend('Simulink', 'Isaac Sim');
+
+subplot(4,2,4);
+plot(tsim, out.w2.Data, 'r'); hold on;
+plot(tsim, w2_interp, 'b--');
+xlabel('Time (s)'); ylabel('w2'); title('Link 2 Angular Velocity vs Time');
+legend('Simulink', 'Isaac Sim');
+
+subplot(4,2,5);
+plot(tsim, out.p.Data, 'r'); hold on;
+plot(tsim, p_interp, 'b--');
+xlabel('Time (s)'); ylabel('p'); title('Cart Position vs Time');
+legend('Simulink', 'Isaac Sim');
+
+sgtitle('Simulink vs Isaac Sim Data');

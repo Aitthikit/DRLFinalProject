@@ -38,6 +38,7 @@ import os
 import torch
 
 from rsl_rl.runners import OnPolicyRunner
+# from rsl_rl.train import SAC
 
 from isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agent
 from isaaclab.utils.dict import print_dict
@@ -45,7 +46,7 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, expor
 from isaaclab_tasks.utils import get_checkpoint_path, parse_env_cfg
 
 # Import extensions to set up environment tasks
-import ext_template.tasks  # noqa: F401
+import double_inv_pen.tasks  # noqa: F401
 
 
 def main():
@@ -110,6 +111,7 @@ def main():
         with torch.inference_mode():
             # agent stepping
             actions = policy(obs)
+            print(actions)
             # env stepping
             obs, _, _, _ = env.step(actions)
         if args_cli.video:

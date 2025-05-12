@@ -50,6 +50,7 @@ import torch
 from datetime import datetime
 
 from rsl_rl.runners import OnPolicyRunner
+from stable_baselines3.sac import SAC
 
 from isaaclab.envs import (
     DirectMARLEnv,
@@ -65,7 +66,7 @@ from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
 # Import extensions to set up environment tasks
-import ext_template.tasks  # noqa: F401
+import double_inv_pen.tasks  # noqa: F401
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
