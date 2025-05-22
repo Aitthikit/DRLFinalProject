@@ -30,11 +30,11 @@ from isaaclab.actuators import ImplicitActuatorCfg
 ##
 # Configuration
 ##
-# direc = 35
-# direc2 = -70
+direc = 15
+direc2 = -30
 
-direc = 16
-direc2 = -32
+# direc = 16
+# direc2 = -32
 # direc = 31
 # direc2 = 0
 

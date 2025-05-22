@@ -136,7 +136,7 @@ def main():
     dt = env.unwrapped.physics_dt
 
     #setup launch
-    test = "SB3_Video"
+    test = "SB3_SAC_Opposit15_2"
     # reset environment
     obs = env.reset()
     timestep = 0
