@@ -52,6 +52,7 @@ import numpy as np
 import os
 import time
 import torch
+import builtins
 
 # from stable_baselines3 import PPO
 # from stable_baselines3.common.vec_env import VecNormalize
@@ -141,9 +142,17 @@ def main():
     timestep2 = 0
     timestep3 = 0
     obs_history = []
-    test = "MPC"
-    mpc = MPC() 
-    x0  = np.array([0, 0, 0.1, 0,0,0])
+    action_history = []
+    test = getattr(builtins, "_custom_test_name", "MPCTune_Temp")
+    # Np = 100
+    # Nc = 20
+    # Ws = [5.0, 10.0, 10.0, 1,1,1]
+    Np = getattr(builtins, "_custom_Np", 100)
+    Nc = getattr(builtins,"_custom_Nc", 20)
+    Ws = getattr(builtins, "_custom_Ws", [5.0, 10.0, 10.0, 1,1,1])
+
+    mpc = MPC(Np,Nc,Ws)
+    x0  = np.array([0, 0, 0.0, 0,0,0])
     controller = mpc.getMPC(x0)
     action = np.array([0.0])
     sum_reward = 0
@@ -163,27 +172,57 @@ def main():
 
 
             obsTransformed = obs[0] * multipliers + offsets
+
+            obs_history.append(obsTransformed)
+            
+            # print(obsTransformed)
             controller.update(obsTransformed,action)
             # print(obsTransformed)
             # print(action)
-            action = controller.output()
-            
-            action_use = torch.tensor(action*-1,device='cuda:0', requires_grad=True).unsqueeze(0)
-            # env stepping
-            obs_history.append(obs)
             
 
-            obs, reward, _, _ = env.step(action_use)
+            action = controller.output()
+            # print(action)
+            action_history.append(action)
+            action_use = torch.tensor(action*-1,device='cuda:0', requires_grad=True).unsqueeze(0)
+            # env stepping
+            # obs_history.append(obs)
+            
+
+            obs, reward, terminated ,info = env.step(action_use)
             sum_reward +=  reward
+            # print(sum_reward,sum_reward > 5.0)
             timestep2 += 1
             timestep3 += 1
             # print(obs)
-        if timestep3 > 1000:
-            print(sum_reward/1000)
-            timestep3 = 0
-            sum_reward = 0
-        if timestep2 >= 30000:
-            break
+            if info[0]['TimeLimit.truncated'] == True and sum_reward[0] > 3.0 :
+                full_path = os.path.join("obs",test)
+                filename = test 
+                os.makedirs(full_path, exist_ok=True)  # Ensure the directory exists
+                file_path = os.path.join(full_path, filename)
+
+                # Convert tensor list to a nested list
+                obs_serializable = [
+                obs.tolist() if isinstance(obs, (torch.Tensor, np.ndarray)) else obs
+                for obs in obs_history]
+                
+                action_serializable = [
+                action.tolist() if isinstance(action, (torch.Tensor, np.ndarray)) else action
+                for action in action_history]
+
+                data_to_save = {
+                    "sum_reward": float(sum_reward[0]) if isinstance(sum_reward, np.ndarray) else float(sum_reward),
+                    "observations": obs_serializable,
+                    "action":action_serializable
+                }
+                with open(file_path, 'w') as f:
+                    json.dump(data_to_save, f, indent=4)
+                time.sleep(5) 
+                break
+            if terminated[0] == True:
+                obs_history = []
+                sum_reward = 0
+
         if args_cli.video:
             timestep += 1
             # Exit the play loop after recording one video
@@ -195,19 +234,19 @@ def main():
         if args_cli.real_time and sleep_time > 0:
             time.sleep(sleep_time)
     
-    full_path = os.path.join("obs",test)
-    filename = test
-    os.makedirs(full_path, exist_ok=True)  # Ensure the directory exists
-    file_path = os.path.join(full_path, filename)
+    # full_path = os.path.join("obs",test)
+    # filename = test
+    # os.makedirs(full_path, exist_ok=True)  # Ensure the directory exists
+    # file_path = os.path.join(full_path, filename)
 
-    # Convert tensor list to a nested list
-    obs_serializable = [
-    obs.tolist() if isinstance(obs, (torch.Tensor, np.ndarray)) else obs
-    for obs in obs_history]
-    # obs_serializable = [obs.tolist() if isinstance(obs, torch.Tensor) else obs for obs in obs_history]
+    # # Convert tensor list to a nested list
+    # obs_serializable = [
+    # obs.tolist() if isinstance(obs, (torch.Tensor, np.ndarray)) else obs
+    # for obs in obs_history]
+    # # obs_serializable = [obs.tolist() if isinstance(obs, torch.Tensor) else obs for obs in obs_history]
 
-    with open(file_path, 'w') as f:
-        json.dump(obs_serializable, f, indent=4)
+    # with open(file_path, 'w') as f:
+    #     json.dump(obs_serializable, f, indent=4)
     # close the simulator
     env.close()
 

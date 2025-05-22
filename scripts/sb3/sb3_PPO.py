@@ -14,6 +14,8 @@ there will be significant overhead in GPU->CPU transfer.
 
 import argparse
 import sys
+import matplotlib.pyplot as plt
+import pandas as pd
 
 from isaaclab.app import AppLauncher
 
@@ -91,7 +93,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     env_cfg.sim.device = args_cli.device if args_cli.device is not None else env_cfg.sim.device
 
     # directory for logging into
-    run_info = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # run_info = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    run_info = "PPO_ScaleReward100"
     log_root_path = os.path.abspath(os.path.join("logs", "sb3", args_cli.task))
     print(f"[INFO] Logging experiment in directory: {log_root_path}")
     print(f"Exact experiment name requested from command line: {run_info}")
@@ -142,7 +145,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         )
 
     # create agent from stable baselines
-    agent = PPO(policy_arch, env, verbose=1, **agent_cfg)
+    agent = PPO(policy_arch, env, verbose=1,tensorboard_log="./ppo_logs", **agent_cfg)
     # agent = SAC("MlpPolicy", env, verbose=1)
     # configure the logger
     new_logger = configure(log_dir, ["stdout", "tensorboard"])
@@ -152,6 +155,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=log_dir, name_prefix="model", verbose=2)
     # train the agent
     agent.learn(total_timesteps=n_timesteps, callback=checkpoint_callback)
+    
     # agent.learn(total_timesteps=1000000, log_interval=4)
     # save the final model
     agent.save(os.path.join(log_dir, "model"))

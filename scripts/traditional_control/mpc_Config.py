@@ -7,7 +7,7 @@ import time
 
 
 class MPC():
-    def __init__(self):  
+    def __init__(self,Np,Nc,Ws):  
     # --- Define initial condition and reference ---
         # self.x0 = 1.0
         # self.theta1_0 = np.pi / 2
@@ -34,7 +34,11 @@ class MPC():
         # --- Control input function (constant force or state feedback placeholder) ---
         self.control_input = lambda y: 0  # Replace with -K @ (y - wr) for feedback
 
-        self.Ts = 0.01
+        self.Ts = 0.05
+
+        self.Np = Np
+        self.Nc = Nc
+        self.Ws = Ws
         # Linearized System Matrices 
         
         # Continuous-time system matrices, linearized about the upright, unstable equilibrium point 
@@ -122,8 +126,8 @@ class MPC():
         xmin = np.array([-100.0, -100, -100, -100,-100, -100])
         xmax = np.array([100.0,   100.0, 100, 100, 100, 100])
 
-        umin = np.array([-25])
-        umax = np.array([25])
+        umin = np.array([-100])
+        umax = np.array([100])
 
         Dumin = np.array([-5])
         Dumax = np.array([5])
@@ -132,8 +136,12 @@ class MPC():
 
         # Qx = sparse.diags([5, 10.0, 10.0, 3,1,1])   # Quadratic cost for states x0, x1, ..., x_N-1
         # QxN = sparse.diags([5, 10.0, 10.0, 3,1,1])  # Quadratic cost for xN
-        Qx = sparse.diags([5, 10.0, 10.0, 1,1,1])   # Quadratic cost for states x0, x1, ..., x_N-1
-        QxN = sparse.diags([5, 10.0, 10.0, 1,1,1])  # Quadratic cost for xN
+        # Qx = sparse.diags([7.0, 10.0, 10.0, 0,1,1])   # Quadratic cost for states x0, x1, ..., x_N-1
+        # QxN = sparse.diags([7.0, 10.0, 10.0, 0,1,1])  # Quadratic cost for xN
+        # Qx = sparse.diags([5.0, 10.0, 10.0, 1,1,1])   # Quadratic cost for states x0, x1, ..., x_N-1
+        # QxN = sparse.diags([5.0, 10.0, 10.0, 1,1,1])  # Quadratic cost for xN
+        Qx = sparse.diags(self.Ws)   # Quadratic cost for states x0, x1, ..., x_N-1
+        QxN = sparse.diags(self.Ws)  # Quadratic cost for xN
         Qu = 0.0 * sparse.eye(1)        # Quadratic cost for u0, u1, ...., u_N-1
         QDu = 0.01 * sparse.eye(1)       # Quadratic cost for Du0, Du1, ...., Du_N-1
 
@@ -145,13 +153,17 @@ class MPC():
         # system_dyn.set_initial_value(x0, t0)
         # system_dyn.set_f_params(0.0)
 
-        Np = 100
-        Nc = 20
+        # Np = 180
+        # Nc = 40
+        # Np = 90
+        # Nc = 10
+        # Np = 100
+        # Nc = 20
         # Np = 150
         # Nc = 90
         # Initialize and setup MPC controller
 
-        K = MPCController(self.Ad,self.Bd,Np=Np,Nc=Nc, x0=x0,xref=xref,uminus1=uminus1,
+        K = MPCController(self.Ad,self.Bd,Np=self.Np,Nc=self.Nc, x0=x0,xref=xref,uminus1=uminus1,
                         Qx=Qx, QxN=QxN, Qu=Qu,QDu=QDu,
                         xmin=xmin,
                         xmax=xmax,

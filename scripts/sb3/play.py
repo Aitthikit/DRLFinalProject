@@ -15,7 +15,7 @@ from isaaclab.app import AppLauncher
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Play a checkpoint of an RL agent from Stable-Baselines3.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
-parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
+parser.add_argument("--video_length", type=int, default=1000, help="Length of the recorded video (in steps).")
 parser.add_argument(
     "--disable_fabric", action="store_true", default=False, help="Disable fabric and use USD I/O operations."
 )
@@ -53,7 +53,7 @@ import os
 import time
 import torch
 
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO,SAC
 from stable_baselines3.common.vec_env import VecNormalize
 
 from isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agent
@@ -64,7 +64,6 @@ from isaaclab_rl.sb3 import Sb3VecEnvWrapper, process_sb3_cfg
 
 import double_inv_pen.tasks    # noqa: F401
 from isaaclab_tasks.utils.parse_cfg import get_checkpoint_path, load_cfg_from_registry, parse_env_cfg
-
 
 def main():
     """Play with stable-baselines agent."""
@@ -132,30 +131,61 @@ def main():
     # create agent from stable baselines
     print(f"Loading checkpoint from: {checkpoint_path}")
     agent = PPO.load(checkpoint_path, env, print_system_info=True)
+    # agent = SAC.load(checkpoint_path, env, print_system_info=True)
 
     dt = env.unwrapped.physics_dt
 
+    #setup launch
+    test = "SB3_PPO_Video"
     # reset environment
     obs = env.reset()
     timestep = 0
     timestep2 = 0
+    timestep3 = 0
     obs_history = []
-    test = "Env4"
+    sum_reward = 0
+    # Override internal parameters if patched
+    
     # simulate environment
     while simulation_app.is_running():
         start_time = time.time()
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
-            # actions, _ = agent.predict(obs, deterministic=True)
-            actions = torch.tensor(0, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+            actions, _ = agent.predict(obs, deterministic=True)
+            # actions = torch.tensor(0, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
             # env stepping
-            obs_history.append(obs)
+            offsets = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+            multipliers = np.array([-1.0, 1.0, 1.0, -1.0, 1.0, 1.0])
 
-            obs, _, _, _ = env.step(actions)
+            obsTransformed = obs[0] * multipliers + offsets
+            
+            obs_history.append(obsTransformed)
+
+            obs, reward, done, _ = env.step(actions)
+            # print(actions)
+            sum_reward +=  reward
             timestep2 += 1
+            timestep3 += 1
             # print(obs)
-        if timestep2 >= 3000:
+            if done[0] == True:
+                full_path = os.path.join("obs",test)
+                filename = test 
+                os.makedirs(full_path, exist_ok=True)  # Ensure the directory exists
+                file_path = os.path.join(full_path, filename)
+
+                # Convert tensor list to a nested list
+                obs_serializable = [
+                obs.tolist() if isinstance(obs, (torch.Tensor, np.ndarray)) else obs
+                for obs in obs_history]
+                data_to_save = {
+                    "sum_reward": float(sum_reward[0]) if isinstance(sum_reward, np.ndarray) else float(sum_reward),
+                    "observations": obs_serializable
+                }
+                with open(file_path, 'w') as f:
+                    json.dump(data_to_save, f, indent=4)
+                break
+        if timestep2 >= 5000:
             break
         if args_cli.video:
             timestep += 1
@@ -167,20 +197,6 @@ def main():
         sleep_time = dt - (time.time() - start_time)
         if args_cli.real_time and sleep_time > 0:
             time.sleep(sleep_time)
-    
-    full_path = os.path.join("obs",test)
-    filename = test
-    os.makedirs(full_path, exist_ok=True)  # Ensure the directory exists
-    file_path = os.path.join(full_path, filename)
-
-    # Convert tensor list to a nested list
-    obs_serializable = [
-    obs.tolist() if isinstance(obs, (torch.Tensor, np.ndarray)) else obs
-    for obs in obs_history]
-    # obs_serializable = [obs.tolist() if isinstance(obs, torch.Tensor) else obs for obs in obs_history]
-
-    with open(file_path, 'w') as f:
-        json.dump(obs_serializable, f, indent=4)
     # close the simulator
     env.close()
 

@@ -135,26 +135,26 @@ class EventCfg:
 
     # reset
     reset_cart_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
+        func=mdp.reset_joints_by_offset_fix,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"]),
-            # "position_range": (-1.0, 1.0),
-            # "velocity_range": (-0.5, 0.5),
-            "position_range": (0.0, 0.0),
-            "velocity_range": (0.0, 0.0),
+            "position_range": (-1.0, 1.0),
+            "velocity_range": (-0.5, 0.5),
+            # "position_range": (0.0, 0.0),
+            # "velocity_range": (0.0, 0.0),
         },
     )
 
     reset_pole_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
+        func=mdp.reset_joints_by_offset_fix,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"]),
-            "position_range": (0.0, 0.0),
-            "velocity_range": (0.0, 0.0),
-            # "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
-            # "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
+            # "position_range": (0.0, 0.0),
+            # "velocity_range": (0.0, 0.0),
+            "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
+            "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
         },
     )
 
@@ -171,53 +171,124 @@ class EventCfg:
     # )
 
     reset_pole_double_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
+        func=mdp.reset_joints_by_offset_fix,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"]),
             #"position_range": (-math.pi * 0.25, math.pi * 0.25),
             #"position_range": (-math.pi, math.pi),
-            # "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
-            # "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
-            "position_range": (-0.01, 0.01),
-            "velocity_range": (0.0, 0.0),
+            "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
+            "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
+            # "position_range": (-0.01, 0.01),
+            # "velocity_range": (0.0, 0.0),
         },
     )
 
+
+# @configclass
+# class RewardsCfg:
+#     """Reward terms for the MDP."""
+
+#     # (1) Constant running reward
+#     alive = RewTerm(func=mdp.is_alive, weight=1.0)
+#     # (2) Failure penalty
+#     terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
+#     # (3) Joint_pos
+#     cart_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -0.5 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["SlidertoCart"]),"target" : 0.0})
+
+#     joint_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -1.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["CarttoPole"]),"target" : 0.0})
+
+#     joint_pos2 = RewTerm(func=mdp.joint_pos_target_l2,weight = -1.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["Pole1toPole2"]),"target" : 0.0})
+#     # (4) Shaping tasks: lower cart velocity
+
+#     cart_vel = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-0.08,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"])},
+#     )
+#     # (5) Shaping tasks: lower pole angular velocity
+#     pole_vel = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-0.005,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"])},
+#     )
+
+#     pole_vel2 = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-0.005,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"])},
+#     )
 
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
 
     # (1) Constant running reward
-    alive = RewTerm(func=mdp.is_alive, weight=1.0)
+    alive = RewTerm(func=mdp.is_alive, weight=10.0)
     # (2) Failure penalty
-    terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
+    terminating = RewTerm(func=mdp.is_terminated, weight=-20.0)
     # (3) Joint_pos
-    cart_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -0.5 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["SlidertoCart"]),"target" : 0.0})
+    cart_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -5.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["SlidertoCart"]),"target" : 0.0})
 
-    joint_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -1.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["CarttoPole"]),"target" : 0.0})
+    joint_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -10.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["CarttoPole"]),"target" : 0.0})
 
-    joint_pos2 = RewTerm(func=mdp.joint_pos_target_l2,weight = -1.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["Pole1toPole2"]),"target" : 0.0})
+    joint_pos2 = RewTerm(func=mdp.joint_pos_target_l2,weight = -10.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["Pole1toPole2"]),"target" : 0.0})
     # (4) Shaping tasks: lower cart velocity
 
     cart_vel = RewTerm(
         func=mdp.joint_vel_l1,
-        weight=-0.08,
+        weight=-0.8,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"])},
     )
     # (5) Shaping tasks: lower pole angular velocity
     pole_vel = RewTerm(
         func=mdp.joint_vel_l1,
-        weight=-0.005,
+        weight=-0.05,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"])},
     )
 
     pole_vel2 = RewTerm(
         func=mdp.joint_vel_l1,
-        weight=-0.005,
+        weight=-0.05,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"])},
     )
+
+
+# @configclass
+# class RewardsCfg:
+#     """Reward terms for the MDP."""
+
+#     # (1) Constant running reward
+#     alive = RewTerm(func=mdp.is_alive, weight=100.0)
+#     # (2) Failure penalty
+#     terminating = RewTerm(func=mdp.is_terminated, weight=-200.0)
+#     # (3) Joint_pos
+#     cart_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -50.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["SlidertoCart"]),"target" : 0.0})
+
+#     joint_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -100.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["CarttoPole"]),"target" : 0.0})
+
+#     joint_pos2 = RewTerm(func=mdp.joint_pos_target_l2,weight = -100.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["Pole1toPole2"]),"target" : 0.0})
+#     # (4) Shaping tasks: lower cart velocity
+
+#     cart_vel = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-8.0,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"])},
+#     )
+#     # (5) Shaping tasks: lower pole angular velocity
+#     pole_vel = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-0.5,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"])},
+#     )
+
+#     pole_vel2 = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-0.5,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"])},
+#     )
+
+
 
 @configclass
 class TerminationsCfg:

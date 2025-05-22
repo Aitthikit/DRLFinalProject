@@ -30,7 +30,18 @@ from isaaclab.actuators import ImplicitActuatorCfg
 ##
 # Configuration
 ##
+# direc = 35
+# direc2 = -70
 
+direc = 16
+direc2 = -32
+# direc = 31
+# direc2 = 0
+
+# direc = 35
+# direc2 = -70
+# direc = 42
+# direc2 = 0
 CART_DOUBLE_PENDULUM_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
         usd_path="/home/memekhos/DRLFinalProject/Robots/DoubleInvertedPendulum.usd",
@@ -135,7 +146,7 @@ class EventCfg:
 
     # reset
     reset_cart_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
+        func=mdp.reset_joints_by_offset_fix,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"]),
@@ -147,11 +158,11 @@ class EventCfg:
     )
 
     reset_pole_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
+        func=mdp.reset_joints_by_offset_fix,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"]),
-            "position_range": (0.0, 0.0),
+            "position_range": (float(np.deg2rad(direc)), float(np.deg2rad(direc))),
             "velocity_range": (0.0, 0.0),
             # "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
             # "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
@@ -171,16 +182,16 @@ class EventCfg:
     # )
 
     reset_pole_double_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
+        func=mdp.reset_joints_by_offset_fix,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"]),
             #"position_range": (-math.pi * 0.25, math.pi * 0.25),
             #"position_range": (-math.pi, math.pi),
-            "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
-            "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
-            # "position_range": (-0.1, 0.1),
-            # "velocity_range": (0.0, 0.0),
+            # "position_range": (-float(np.deg2rad(0.0)), float(np.deg2rad(0.0))),
+            # "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
+            "position_range": (float(np.deg2rad(direc2)), float(np.deg2rad(direc2))),
+            "velocity_range": (0.0, 0.0),
         },
     )
 
@@ -192,9 +203,9 @@ class RewardsCfg:
     # (1) Constant running reward
     alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # (2) Failure penalty
-    terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
+    # terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
     # (3) Joint_pos
-    cart_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -0.1 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["SlidertoCart"]),"target" : 0.0})
+    cart_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -0.5 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["SlidertoCart"]),"target" : 0.0})
 
     joint_pos = RewTerm(func=mdp.joint_pos_target_l2,weight = -1.0 ,params={"asset_cfg": SceneEntityCfg("robot",joint_names = ["CarttoPole"]),"target" : 0.0})
 
@@ -228,18 +239,18 @@ class TerminationsCfg:
     # (2) Cart out of bounds
     cart_out_of_bounds = DoneTerm(
         func=mdp.joint_pos_out_of_manual_limit,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"]), "bounds": (-2.5, 2.5)},
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"]), "bounds": (-2.9, 2.9)},
     )
     # (3) Pole out of bounds
-    pole_out_of_bounds = DoneTerm(
-        func=mdp.joint_pos_out_of_manual_limit,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"]), "bounds": (float(np.deg2rad(-45.0)), float(np.deg2rad(45.0)))},
-    )
+    # pole_out_of_bounds = DoneTerm(
+    #     func=mdp.joint_pos_out_of_manual_limit,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"]), "bounds": (float(np.deg2rad(-90.0)), float(np.deg2rad(90.0)))},
+    # )
 
-    pole2_out_of_bounds = DoneTerm(
-        func=mdp.joint_pos_out_of_manual_limit,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"]), "bounds": (float(np.deg2rad(-45.0)), float(np.deg2rad(45.0)))},
-    )
+    # pole2_out_of_bounds = DoneTerm(
+    #     func=mdp.joint_pos_out_of_manual_limit,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"]), "bounds": (float(np.deg2rad(-180.0)), float(np.deg2rad(90.0)))},
+    # )
 
 ##
 # Environment configuration
