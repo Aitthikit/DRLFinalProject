@@ -141,8 +141,6 @@ class EventCfg:
             "asset_cfg": SceneEntityCfg("robot", joint_names=["SlidertoCart"]),
             "position_range": (-1.0, 1.0),
             "velocity_range": (-0.5, 0.5),
-            # "position_range": (0.0, 0.0),
-            # "velocity_range": (0.0, 0.0),
         },
     )
 
@@ -151,36 +149,19 @@ class EventCfg:
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"]),
-            # "position_range": (0.0, 0.0),
-            # "velocity_range": (0.0, 0.0),
             "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
             "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
         },
     )
 
-    # reset_pole_position = EventTerm(
-    #     func=mdp.reset_joints_by_offset,
-    #     mode="reset",
-    #     params={
-    #         "asset_cfg": SceneEntityCfg("robot", joint_names=["CarttoPole"]),
-    #         #"position_range": (-math.pi * 0.25, math.pi * 0.25),
-    #         #"position_range": (-math.pi, math.pi),
-    #         "position_range": (math.pi, math.pi),
-    #         "velocity_range": (0.0, 0.0),
-    #     },
-    # )
 
     reset_pole_double_position = EventTerm(
         func=mdp.reset_joints_by_offset_fix,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=["Pole1toPole2"]),
-            #"position_range": (-math.pi * 0.25, math.pi * 0.25),
-            #"position_range": (-math.pi, math.pi),
             "position_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
             "velocity_range": (-float(np.deg2rad(24.0)), float(np.deg2rad(24.0))),
-            # "position_range": (-0.01, 0.01),
-            # "velocity_range": (0.0, 0.0),
         },
     )
 
